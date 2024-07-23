@@ -12,7 +12,8 @@ const char* tokenNames[] = {
 };
 
 TokenType getTokenTypeFromName(const char* name) {
-    for (int i = 0; i < sizeof(tokenNames); i++) {
+    int numTokenTypes = sizeof(tokenNames) / sizeof(tokenNames[0]);
+    for (int i = 0; i < numTokenTypes; i++) {
         if (strcmp(name, tokenNames[i]) == 0) {
             return (TokenType)i;
         }
@@ -20,41 +21,30 @@ TokenType getTokenTypeFromName(const char* name) {
     return UK;
 }
 
-int instrucionCheck(TokenType token, FILE* source) {
-    switch (token)
-    {
-    case IT: intCheck(source);
-    case VR: varCheck(source);
-    case SC: scanfCheck(source);
-    case PT: printfCheck(source);
-    case IF: ifCheck(source);
-    default: return 0;
-    }
+TokenType updateLine(FILE* source) {
+    char token_str[2];
+    char ch;
+
+    while ((ch = fgetc(source)) != '\n');
+    ungetc(ch, source);
+    fprintf(source, "  ok");
+    fgetc(source);
+    token_str[0] = fgetc(source);
+    token_str[1] = fgetc(source);
+    return getTokenTypeFromName(token_str);
 }
 
-int intCheck(source) {
+int checkPV(FILE* source) {
     TokenType nextToken;
 
     nextToken = updateLine(source);
-    if (nextToken != VR)
-        return 0;
+    if (nextToken == PV)
+        return 1;
 
-    return checkPV(source);
+    return 0;
 }
 
-int varCheck(source) {
-    TokenType nextToken;
-
-    nextToken = updateLine(source);
-    if (nextToken != AT)
-        return 0;
-
-    checkExpression(source);
-
-    return checkPV(source);
-}
-
-int checkExpression(source) {
+int checkExpression(FILE* source) {
     TokenType nextToken;
 
     nextToken = updateLine(source);
@@ -72,7 +62,30 @@ int checkExpression(source) {
     return 1;
 }
 
-int scanfCheck(source) {
+
+int intCheck(FILE* source) {
+    TokenType nextToken;
+
+    nextToken = updateLine(source);
+    if (nextToken != VR)
+        return 0;
+
+    return checkPV(source);
+}
+
+int varCheck(FILE* source) {
+    TokenType nextToken;
+
+    nextToken = updateLine(source);
+    if (nextToken != AT)
+        return 0;
+
+    checkExpression(source);
+
+    return checkPV(source);
+}
+
+int scanfCheck(FILE* source) {
     TokenType nextToken;
 
     nextToken = updateLine(source);
@@ -90,7 +103,7 @@ int scanfCheck(source) {
     return checkPV(source);
 }
 
-int printfCheck(source) {
+int printfCheck(FILE* source) {
     TokenType nextToken;
 
     nextToken = updateLine(source);
@@ -106,7 +119,7 @@ int printfCheck(source) {
     return checkPV(source);
 }
 
-int ifCheck(source) {
+int ifCheck(FILE* source) {
     TokenType nextToken;
 
     nextToken = updateLine(source);
@@ -128,32 +141,21 @@ int ifCheck(source) {
     varCheck(source);
 }
 
-int checkPV(source) {
-    TokenType nextToken;
-
-    nextToken = updateLine(source);
-    if (nextToken == PV)
-        return 1;
-
-    return 0;
-}
-
-TokenType updateLine(FILE* source) {
-    char token_str[2];
-    char ch;
-
-    while ((ch = fgetc(source)) != '\n');
-    ungetc(ch, source);
-    fprintf(source, "  ok");
-    fgetc(source);
-    token_str[0] = fgetc(source);
-    token_str[1] = fgetc(source);
-    return getTokenTypeFromName(token_str);
+int instrucionCheck(TokenType token, FILE* source) {
+    switch (token)
+    {
+    case IT: intCheck(source);
+    case VR: varCheck(source);
+    case SC: scanfCheck(source);
+    case PT: printfCheck(source);
+    case IF: ifCheck(source);
+    default: return 0;
+    }
 }
 
 
 int main() {
-    FILE* source = fopen("tokens.txt", "w");
+    FILE* source = fopen("tokens.txt", "r+");
     
     TokenType token;
     char token_str[2];
@@ -162,6 +164,7 @@ int main() {
     token_str[0] = fgetc(source);
     token_str[1] = fgetc(source);
     token = getTokenTypeFromName(token_str);
+    printf("TOKEN antes do while: %s", token);
 
     while (token != EF) {
         instrucionCheck(token, source);
@@ -169,7 +172,9 @@ int main() {
         token = updateLine(source);
     }
 
+    printf("a");
     while ((ch = fgetc(source)) != '\n');
+    printf("b");
     ungetc(ch, source);
     fprintf(source, "  OK");
 

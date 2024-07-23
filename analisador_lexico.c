@@ -18,7 +18,7 @@ typedef struct {
 
 void printToken(Token token, FILE* destination) {
     fprintf(destination, "%s  %s\n", tokenNames[token.type], token.word);
-    printf("%s  %s\n", tokenNames[token.type], token.word);
+    // printf("%s  %s\n", tokenNames[token.type], token.word);
 }
 
 int isKeyword(char* str) {
