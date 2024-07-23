@@ -155,31 +155,26 @@ int instrucionCheck(TokenType token, FILE* source) {
 int main() {
     FILE* source = fopen("tokens.txt", "r+");
 
-    if(!source) {
-        perror("abobora");
-        return EXIT_FAILURE;
-    }
-
-    printf("comecou");
+    printf("comecou\n");
     
     TokenType token;
     char token_str[3];
+    token_str[0] = '0';
+    token_str[0] = '1';
     token_str[2] = '\0';
 
     token_str[0] = fgetc(source);
     token_str[1] = fgetc(source);
     token = getTokenTypeFromName(token_str);
-    printf("TOKEN antes do while: %s", token);
+    printf("TOKEN antes do while: %s\n", token_str);
 
-    while (token != EF) {
+     while (token != EF) {
         instrucionCheck(token, source);
 
         token = updateLine(source);
-    }
+     }
 
-    printf("a");
     while (fgetc(source) != '\n' && !feof(source));
-    printf("b");
     fprintf(source, "  OK");
 
     fclose(source);
