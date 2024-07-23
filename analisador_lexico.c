@@ -4,11 +4,11 @@
 #include <ctype.h>
 
 typedef enum {
-    VR, NM, IT, SC, PT, IF, PV, AT, AP, FP, AC, FC, OP, CP, EF, UNKNOWN
+    VR, NM, IT, SC, PT, IF, PV, AT, AP, FP, AC, FC, OP, CP, EF, UK
 } TokenType;
 
 const char* tokenNames[] = {
-    "VR", "NM", "IT", "SC", "PT", "IF", "PV", "AT", "AP", "FP", "AC", "FC", "OP", "CP", "EF", "UNKNOWN"
+    "VR", "NM", "IT", "SC", "PT", "IF", "PV", "AT", "AP", "FP", "AC", "FC", "OP", "CP", "EF", "UK"
 };
 
 typedef struct {
@@ -16,7 +16,8 @@ typedef struct {
     char word[100];
 } Token;
 
-void printToken(Token token) {
+void printToken(Token token, FILE* destination) {
+    fprintf(destination, "%s  %s\n", tokenNames[token.type], token.word);
     printf("%s  %s\n", tokenNames[token.type], token.word);
 }
 
@@ -29,7 +30,7 @@ TokenType getKeywordTokenType(char* str) {
     if (strcmp(str, "scanf") == 0) return SC;
     if (strcmp(str, "printf") == 0) return PT;
     if (strcmp(str, "if") == 0) return IF;
-    return UNKNOWN;
+    return UK;
 }
 
 TokenType getCharTokenType(char c) {
@@ -43,19 +44,19 @@ TokenType getCharTokenType(char c) {
         case '-': return OP;
         case '*': return OP;
         case '/': return OP;
-        default: return UNKNOWN;
+        default: return UK;
     }
 }
 
 TokenType getCompOrAtTokenType(char* str) {
     if (strcmp(str, "=") == 0) return AT;
     if (strcmp(str, "==") == 0 || strcmp(str, "<") == 0 || strcmp(str, ">") == 0 || strcmp(str, "<=") == 0 || strcmp(str, ">=") == 0) return CP;
-    return UNKNOWN;
+    return UK;
 }
 
 Token getNextToken(FILE* source) {
     Token token;
-    token.type = UNKNOWN;
+    token.type = UK;
     int index = 0;
     char ch;
 
@@ -113,6 +114,7 @@ Token getNextToken(FILE* source) {
 
 int main() {
     FILE* source = fopen("input.c", "r");
+    FILE* destination = fopen("tokens.txt", "w")
     Token token;
 
     do {
