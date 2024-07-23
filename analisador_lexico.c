@@ -4,11 +4,11 @@
 #include <ctype.h>
 
 typedef enum {
-    VR, NM, IT, SC, PT, IF, PV, AT, AP, FP, OP, CP, EF, UNKNOWN
+    VR, NM, IT, SC, PT, IF, PV, AT, AP, FP, AC, FC, OP, CP, EF, UNKNOWN
 } TokenType;
 
 const char* tokenNames[] = {
-    "VR", "NM", "IT", "SC", "PT", "IF", "PV", "AT", "AP", "FP", "OP", "CP", "EF", "UNKNOWN"
+    "VR", "NM", "IT", "SC", "PT", "IF", "PV", "AT", "AP", "FP", "AC", "FC", "OP", "CP", "EF", "UNKNOWN"
 };
 
 typedef struct {
@@ -17,7 +17,7 @@ typedef struct {
 } Token;
 
 void printToken(Token token) {
-    printf("Token: %s, word: %s\n", tokenNames[token.type], token.word);
+    printf("%s  %s\n", tokenNames[token.type], token.word);
 }
 
 bool isKeyword(char* str) {
@@ -38,6 +38,8 @@ TokenType getCharTokenType(char c) {
         case '=': return AT;
         case '(': return AP;
         case ')': return FP;
+        case '{': return AC;
+        case '}': return FC;
         case '+': return OP;
         case '-': return OP;
         case '*': return OP;
