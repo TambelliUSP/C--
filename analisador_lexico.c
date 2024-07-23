@@ -114,12 +114,12 @@ Token getNextToken(FILE* source) {
 
 int main() {
     FILE* source = fopen("input.c", "r");
-    FILE* destination = fopen("tokens.txt", "w")
+    FILE* destination = fopen("tokens.txt", "w");
     Token token;
 
     do {
         token = getNextToken(source);
-        printToken(token);
+        printToken(token, destination);
     } while (token.type != EF);
 
     fclose(source);
