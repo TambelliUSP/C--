@@ -22,13 +22,11 @@ TokenType getTokenTypeFromName(const char* name) {
 }
 
 TokenType updateLine(FILE* source) {
-    char token_str[2];
-    char ch;
+    char token_str[3];
+    token_str[2] = '\0';
 
-    while ((ch = fgetc(source)) != '\n');
-    ungetc(ch, source);
-    fprintf(source, "  ok");
-    fgetc(source);
+    while (fgetc(source) != '\n' && !feof(source));
+  //  fprintf(source, "  ok");
     token_str[0] = fgetc(source);
     token_str[1] = fgetc(source);
     return getTokenTypeFromName(token_str);
@@ -138,17 +136,17 @@ int ifCheck(FILE* source) {
     if (nextToken != FP)
         return 0;
     
-    varCheck(source);
+    return varCheck(source);
 }
 
 int instrucionCheck(TokenType token, FILE* source) {
     switch (token)
     {
-    case IT: intCheck(source);
-    case VR: varCheck(source);
-    case SC: scanfCheck(source);
-    case PT: printfCheck(source);
-    case IF: ifCheck(source);
+    case IT: return intCheck(source);
+    case VR: return varCheck(source);
+    case SC: return scanfCheck(source);
+    case PT: return printfCheck(source);
+    case IF: return ifCheck(source);
     default: return 0;
     }
 }
@@ -156,10 +154,17 @@ int instrucionCheck(TokenType token, FILE* source) {
 
 int main() {
     FILE* source = fopen("tokens.txt", "r+");
+
+    if(!source) {
+        perror("abobora");
+        return EXIT_FAILURE;
+    }
+
+    printf("comecou");
     
     TokenType token;
-    char token_str[2];
-    char ch;
+    char token_str[3];
+    token_str[2] = '\0';
 
     token_str[0] = fgetc(source);
     token_str[1] = fgetc(source);
@@ -173,9 +178,8 @@ int main() {
     }
 
     printf("a");
-    while ((ch = fgetc(source)) != '\n');
+    while (fgetc(source) != '\n' && !feof(source));
     printf("b");
-    ungetc(ch, source);
     fprintf(source, "  OK");
 
     fclose(source);
