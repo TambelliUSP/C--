@@ -20,7 +20,7 @@ void printToken(Token token) {
     printf("%s  %s\n", tokenNames[token.type], token.word);
 }
 
-bool isKeyword(char* str) {
+int isKeyword(char* str) {
     return (strcmp(str, "int") == 0 || strcmp(str, "scanf") == 0 || strcmp(str, "printf") == 0 || strcmp(str, "if") == 0);
 }
 
@@ -35,7 +35,6 @@ TokenType getKeywordTokenType(char* str) {
 TokenType getCharTokenType(char c) {
     switch (c) {
         case ';': return PV;
-        case '=': return AT;
         case '(': return AP;
         case ')': return FP;
         case '{': return AC;
@@ -48,7 +47,8 @@ TokenType getCharTokenType(char c) {
     }
 }
 
-TokenType getCompOperatorTokenType(char* str) {
+TokenType getCompOrAtTokenType(char* str) {
+    if (strcmp(str, "=") == 0) return AT;
     if (strcmp(str, "==") == 0 || strcmp(str, "<") == 0 || strcmp(str, ">") == 0 || strcmp(str, "<=") == 0 || strcmp(str, ">=") == 0) return CP;
     return UNKNOWN;
 }
@@ -95,7 +95,7 @@ Token getNextToken(FILE* source) {
                 ungetc(ch, source);
             }
             token.word[index] = '\0';
-            token.type = getCompOperatorTokenType(token.word);
+            token.type = getCompOrAtTokenType(token.word);
             return token;
 
         } else {

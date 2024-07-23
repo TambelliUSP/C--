@@ -1,6 +1,9 @@
-int x;
+int abobora;
 scanf(x);
-x = x+1;
-if(x > 5)
+x = x+123;
+if(x > 5) {
     x = x * 2;
-printf(x);
+}
+printf(_x);
+int 128_12;
+a11111
