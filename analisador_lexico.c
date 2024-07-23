@@ -123,5 +123,5 @@ int main() {
     } while (token.type != EF);
 
     fclose(source);
-    return EXIT_SUCCESS;
+    return 0;
 }
