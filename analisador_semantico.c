@@ -262,7 +262,7 @@ int defineOperation(FILE *source, FILE *destination, char *destinationReg)
                 strcat(assistantInstruction, "#");
                 char numberString[30];
                 int number = readNumber(source);
-                sprintf(numberString, "%d", firstRegOrNum);
+                sprintf(numberString, "%d", number);
                 strcat(assistantInstruction, numberString);
 
                 fprintf(destination, "%s\n", assistantInstruction);
@@ -274,7 +274,7 @@ int defineOperation(FILE *source, FILE *destination, char *destinationReg)
                 strcat(instruction, "#");
                 char numberString[30];
                 int number = readNumber(source);
-                sprintf(numberString, "%d", firstRegOrNum);
+                sprintf(numberString, "%d", number);
                 strcat(instruction, numberString);
             }
         }

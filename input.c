@@ -1,8 +1,8 @@
 int x;
 int y;
 x = 0;
-y = z;
-if (x + 1 == 3)
+y = x + 9;
+if (1 + x == 3)
     x = 0;
 if (2 > x - 1)
     x = 0;
