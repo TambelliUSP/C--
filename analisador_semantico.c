@@ -27,6 +27,7 @@ const char *tokenNames[] = {
     "VR", "NM", "IT", "SC", "PT", "IF", "PV", "AT", "AP", "FP", "OP", "CP", "EF", "UK"};
 
 int freeRegister = 0;
+int labelCounter = 0;
 
 typedef enum
 {
@@ -148,7 +149,37 @@ int readNumber(FILE *source)
     return atoi(numberString);
 }
 
-int defineOperation(FILE *source, FILE *destination, int destinationReg)
+void readComparator(FILE *source, char *comparatorString)
+{
+    char ch;
+    int index = 0;
+
+    while ((ch = fgetc(source)) != '\n')
+    {
+        if (isspace(ch))
+        {
+            continue;
+        }
+        else if (ch == '=' || ch == '<' || ch == '>')
+        {
+            comparatorString[index++] = ch;
+            if ((ch = fgetc(source)) == '=')
+            {
+                comparatorString[index++] = ch;
+            }
+            else
+            {
+                ungetc(ch, source);
+            }
+            comparatorString[index] = '\0';
+        }
+    }
+    ungetc(ch, source);
+
+    return;
+}
+
+int defineOperation(FILE *source, FILE *destination, char *destinationReg)
 {
     char instruction[100];
     int isImmediateOperation;
@@ -197,7 +228,7 @@ int defineOperation(FILE *source, FILE *destination, int destinationReg)
             return 0;
             break;
         }
-        strcat(instruction, registerNames[destinationReg]);
+        strcat(instruction, destinationReg);
         strcat(instruction, ", ");
 
         nextToken = updateToken(source);
@@ -212,7 +243,7 @@ int defineOperation(FILE *source, FILE *destination, int destinationReg)
             strcpy(assistantInstruction, "mov R0, ");
             strcat(assistantInstruction, "#");
             char numberString[30];
-            itoa(firstRegOrNum, numberString, 10);
+            sprintf(numberString, "%d", firstRegOrNum);
             strcat(assistantInstruction, numberString);
 
             fprintf(destination, "%s\n", assistantInstruction);
@@ -231,7 +262,7 @@ int defineOperation(FILE *source, FILE *destination, int destinationReg)
                 strcat(assistantInstruction, "#");
                 char numberString[30];
                 int number = readNumber(source);
-                itoa(number, numberString, 10);
+                sprintf(numberString, "%d", firstRegOrNum);
                 strcat(assistantInstruction, numberString);
 
                 fprintf(destination, "%s\n", assistantInstruction);
@@ -243,7 +274,7 @@ int defineOperation(FILE *source, FILE *destination, int destinationReg)
                 strcat(instruction, "#");
                 char numberString[30];
                 int number = readNumber(source);
-                itoa(number, numberString, 10);
+                sprintf(numberString, "%d", firstRegOrNum);
                 strcat(instruction, numberString);
             }
         }
@@ -260,13 +291,13 @@ int defineOperation(FILE *source, FILE *destination, int destinationReg)
         rollbackToken(source, nextToken);
 
         strcpy(instruction, "mov ");
-        strcat(instruction, registerNames[destinationReg]);
+        strcat(instruction, destinationReg);
         strcat(instruction, ", ");
         if (isImmediateOperation == 1)
         {
             strcat(instruction, "#");
             char numberString[30];
-            itoa(firstRegOrNum, numberString, 10);
+            sprintf(numberString, "%d", firstRegOrNum);
             strcat(instruction, numberString);
         }
         else
@@ -326,153 +357,144 @@ int executeOperation(FILE *source, FILE *destination)
 
     updateToken(source); // AT
 
-    defineOperation(source, destination, destinationReg);
+    defineOperation(source, destination, registerNames[destinationReg]);
 
     updateToken(source); // PV
 
     return 1;
 }
 
-int executeConditionalOperation(FILE *source, FILE *destination) {
-    TokenType nextToken;
+int executeConditionalOperation(FILE *source, FILE *destination)
+{
+    char branchInstruction[100];
 
-    nextToken = updateToken(source); // AP esperado
+    updateToken(source); // AP esperado
 
-    int leftOperandReg = variableToReg(source); // Pode ser uma variável
-    if (leftOperandReg < 0) return 0;
+    defineOperation(source, destination, "R2");
 
-    nextToken = updateToken(source); // CP ou OP esperado
+    updateToken(source); // CP esperado
 
-    char comparisonInstruction[10];
-    switch (fgetc(source)) {
-        case '==': // ==
-            strcpy(comparisonInstruction, "cmp ");
-            break;
-        case '<': // <
-            strcpy(comparisonInstruction, "cmp ");
-            break;
-        case '>': // >
-            strcpy(comparisonInstruction, "cmp ");
-            break;
-        default:
-            return 0;
+    char comparatorString[3];
+    readComparator(source, comparatorString);
+
+    defineOperation(source, destination, "R1");
+
+    fprintf(destination, "cmp R0, R2, R1\n");
+
+    // gera o salto condicional
+    if (strcmp(comparatorString, "==") == 0)
+    {
+        strcpy(branchInstruction, "bne ");
     }
-
-    nextToken = updateToken(source);
-    int rightOperandReg;
-    char immediateValue[30];
-
-    if (nextToken == VR) {
-        rightOperandReg = variableToReg(source);
-        if (rightOperandReg < 0) return 0;
-        sprintf(comparisonInstruction + strlen(comparisonInstruction), "%s, %s", registerNames[leftOperandReg], registerNames[rightOperandReg]);
-    } else if (nextToken == NM) {
-        int rightOperandValue = readNumber(source);
-        sprintf(immediateValue, "#%d", rightOperandValue);
-        sprintf(comparisonInstruction + strlen(comparisonInstruction), "%s, %s", registerNames[leftOperandReg], immediateValue);
-    } else {
+    else if (strcmp(comparatorString, "<") == 0)
+    {
+        strcpy(branchInstruction, "bge ");
+    }
+    else if (strcmp(comparatorString, ">") == 0)
+    {
+        strcpy(branchInstruction, "ble ");
+    }
+    else if (strcmp(comparatorString, "<=") == 0)
+    {
+        strcpy(branchInstruction, "bgt ");
+    }
+    else if (strcmp(comparatorString, ">=") == 0)
+    {
+        strcpy(branchInstruction, "blt ");
+    }
+    else
+    {
         return 0;
     }
 
-    fprintf(destination, "%s\n", comparisonInstruction);
-
-    // gera o salto condicional
-    char jumpInstruction[10];
-    switch (fgetc(source)) {
-        case '==': // ==
-            strcpy(jumpInstruction, "beq");
-            break;
-        case '<': // <
-            strcpy(jumpInstruction, "bge"); // Salta se for maior ou igual (o inverso da operação)
-            break;
-        case '>': // >
-            strcpy(jumpInstruction, "ble"); // Salta se for menor ou igual (o inverso da operação)
-            break;
-        default:
-            return 0;
-    }
-
     // cria uma label para onde pular se a condição não for atendida
-    static int labelCounter = 0;
-    char label[20];
-    sprintf(label, "label_%d", labelCounter++);
+    strcat(branchInstruction, "label_");
 
-    fprintf(destination, "%s %s\n", jumpInstruction, label);
+    fprintf(destination, "%s%d\n", branchInstruction, labelCounter);
+
+    updateToken(source); // FP esperado
+
+    updateToken(source); // VR esperado
 
     // executa a operação dentro do if
     executeOperation(source, destination);
 
     // gerar a label de continuação
-    fprintf(destination, "%s:\n", label);
-
-    nextToken = updateToken(source); // FP esperado
+    fprintf(destination, "label_%d:\n", labelCounter);
+    labelCounter++;
 
     return 1;
 }
 
+int checkPV(FILE *source)
+{
+    TokenType nextToken;
 
-// int scanfCheck(FILE *source)
-// {
-//     TokenType nextToken;
+    nextToken = updateToken(source);
+    if (nextToken == PV)
+        return 1;
 
-//     nextToken = updateToken(source);
-//     if (nextToken != AP)
-//         return 0;
+    return 0;
+}
 
-//     nextToken = updateToken(source);
-//     if (nextToken != VR)
-//         return 0;
+int checkExpression(FILE *source)
+{
+    TokenType nextToken;
 
-//     nextToken = updateToken(source);
-//     if (nextToken != FP)
-//         return 0;
+    nextToken = updateToken(source);
+    if (nextToken != NM && nextToken != VR)
+        return 0;
 
-//     return checkPV(source);
-// }
+    nextToken = updateToken(source);
+    if (nextToken == OP)
+    {
+        nextToken = updateToken(source);
+        if (nextToken != NM && nextToken != VR)
+            return 0;
+    }
+    else
+    {
+        rollbackToken(source, nextToken);
+    }
 
-// int printfCheck(FILE *source)
-// {
-//     TokenType nextToken;
+    return 1;
+}
 
-//     nextToken = updateToken(source);
-//     if (nextToken != AP)
-//         return 0;
+int scanfCheck(FILE *source)
+{
+    TokenType nextToken;
 
-//     checkExpression(source);
+    nextToken = updateToken(source);
+    if (nextToken != AP)
+        return 0;
 
-//     nextToken = updateToken(source);
-//     if (nextToken != FP)
-//         return 0;
+    nextToken = updateToken(source);
+    if (nextToken != VR)
+        return 0;
 
-//     return checkPV(source);
-// }
+    nextToken = updateToken(source);
+    if (nextToken != FP)
+        return 0;
 
-// int ifCheck(FILE *source)
-// {
-//     TokenType nextToken;
+    return checkPV(source);
+}
 
-//     nextToken = updateToken(source);
-//     if (nextToken != AP)
-//         return 0;
+int printfCheck(FILE *source)
+{
+    TokenType nextToken;
 
-//     checkExpression(source);
+    nextToken = updateToken(source);
+    if (nextToken != AP)
+        return 0;
 
-//     nextToken = updateToken(source);
-//     if (nextToken != CP)
-//         return 0;
+    checkExpression(source);
 
-//     checkExpression(source);
+    nextToken = updateToken(source);
+    if (nextToken != FP)
+        return 0;
 
-//     nextToken = updateToken(source);
-//     if (nextToken != FP)
-//         return 0;
-
-//     nextToken = updateToken(source);
-//     if (nextToken != VR)
-//         return 0;
-
-//     return executeOperation(source);
-// }
+    return checkPV(source);
+}
 
 int instrucionCheck(TokenType token, FILE *source, FILE *destination)
 {
@@ -483,9 +505,9 @@ int instrucionCheck(TokenType token, FILE *source, FILE *destination)
     case VR:
         return executeOperation(source, destination);
     case SC:
-        return scanfCheck(source); // mudar nome
+        return scanfCheck(source); // mantido para ignorar o scan na tradução
     case PT:
-        return printfCheck(source); // mudar nome
+        return printfCheck(source); // mantido para ignorar o print na tradução
     case IF:
         return executeConditionalOperation(source, destination);
     default:

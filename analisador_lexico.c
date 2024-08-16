@@ -53,6 +53,7 @@ TokenType getKeywordTokenType(char *str)
         return PT;
     if (strcmp(str, "if") == 0)
         return IF;
+    printf("ERRO: Keyword não reconhecida.\n");
     return UK;
 }
 
@@ -79,6 +80,7 @@ TokenType getCharTokenType(char c)
     case '/':
         return OP;
     default:
+        printf("ERRO: Caracter não reconhecido: '%c'.\n", c);
         return UK;
     }
 }
@@ -89,6 +91,7 @@ TokenType getCompOrAtTokenType(char *str)
         return AT;
     if (strcmp(str, "==") == 0 || strcmp(str, "<") == 0 || strcmp(str, ">") == 0 || strcmp(str, "<=") == 0 || strcmp(str, ">=") == 0)
         return CP;
+    printf("ERRO: Caracter não reconhecido: '%s'.\n", str);
     return UK;
 }
 
