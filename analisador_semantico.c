@@ -379,7 +379,7 @@ int executeConditionalOperation(FILE *source, FILE *destination)
 
     defineOperation(source, destination, "R1");
 
-    fprintf(destination, "cmp R0, R2, R1\n");
+    fprintf(destination, "cmp R2, R1\n");
 
     // gera o salto condicional
     if (strcmp(comparatorString, "==") == 0)
