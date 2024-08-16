@@ -333,6 +333,84 @@ int executeOperation(FILE *source, FILE *destination)
     return 1;
 }
 
+int executeConditionalOperation(FILE *source, FILE *destination) {
+    TokenType nextToken;
+
+    nextToken = updateToken(source); // AP esperado
+
+    int leftOperandReg = variableToReg(source); // Pode ser uma variável
+    if (leftOperandReg < 0) return 0;
+
+    nextToken = updateToken(source); // CP ou OP esperado
+
+    char comparisonInstruction[10];
+    switch (fgetc(source)) {
+        case '==': // ==
+            strcpy(comparisonInstruction, "cmp ");
+            break;
+        case '<': // <
+            strcpy(comparisonInstruction, "cmp ");
+            break;
+        case '>': // >
+            strcpy(comparisonInstruction, "cmp ");
+            break;
+        default:
+            return 0;
+    }
+
+    nextToken = updateToken(source);
+    int rightOperandReg;
+    char immediateValue[30];
+
+    if (nextToken == VR) {
+        rightOperandReg = variableToReg(source);
+        if (rightOperandReg < 0) return 0;
+        sprintf(comparisonInstruction + strlen(comparisonInstruction), "%s, %s", registerNames[leftOperandReg], registerNames[rightOperandReg]);
+    } else if (nextToken == NM) {
+        int rightOperandValue = readNumber(source);
+        sprintf(immediateValue, "#%d", rightOperandValue);
+        sprintf(comparisonInstruction + strlen(comparisonInstruction), "%s, %s", registerNames[leftOperandReg], immediateValue);
+    } else {
+        return 0;
+    }
+
+    fprintf(destination, "%s\n", comparisonInstruction);
+
+    // gera o salto condicional
+    char jumpInstruction[10];
+    switch (fgetc(source)) {
+        case '==': // ==
+            strcpy(jumpInstruction, "beq");
+            break;
+        case '<': // <
+            strcpy(jumpInstruction, "bge"); // Salta se for maior ou igual (o inverso da operação)
+            break;
+        case '>': // >
+            strcpy(jumpInstruction, "ble"); // Salta se for menor ou igual (o inverso da operação)
+            break;
+        default:
+            return 0;
+    }
+
+    // cria uma label para onde pular se a condição não for atendida
+    static int labelCounter = 0;
+    char label[20];
+    sprintf(label, "label_%d", labelCounter++);
+
+    fprintf(destination, "%s %s\n", jumpInstruction, label);
+
+    // executa a operação dentro do if
+    executeOperation(source, destination);
+
+    // gerar a label de continuação
+    fprintf(destination, "%s:\n", label);
+
+    nextToken = updateToken(source); // FP esperado
+
+    return 1;
+}
+
+
 // int scanfCheck(FILE *source)
 // {
 //     TokenType nextToken;
@@ -409,7 +487,7 @@ int instrucionCheck(TokenType token, FILE *source, FILE *destination)
     case PT:
         return printfCheck(source); // mudar nome
     case IF:
-        return ifCheck(source); // mudar nome (sugestão executeConditionalOperation)
+        return executeConditionalOperation(source, destination);
     default:
         return 0;
     }
